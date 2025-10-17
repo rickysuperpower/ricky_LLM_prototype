@@ -1,0 +1,17 @@
+# === Core Python Dependencies ===
+torch>=2.3.0           # PyTorch本体（CPU/GPU環境で自動選択）
+tiktoken>=0.7.0        # GPT系トークナイザ
+numpy>=1.26.0          # 数値計算ライブラリ
+
+# === Development / Visualization ===
+jupyter>=1.0.0         # Notebook実行用
+ipykernel>=6.29.0      # VSCodeやJupyter用のカーネル
+matplotlib>=3.8.0      # グラフ描画（学習可視化用）
+
+# === Optional: モデル構築・拡張に備えて ===
+transformers>=4.41.0   # （後でHuggingFace互換にする場合）
+datasets>=2.19.0       # （学習用データ読み込みに備えて）
+
+# === 開発補助（任意） ===
+tqdm>=4.66.0           # 進捗バー
+
