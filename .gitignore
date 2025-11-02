@@ -11,3 +11,7 @@ env/
 *.pt
 *.pth
 checkpoints/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
