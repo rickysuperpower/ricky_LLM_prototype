@@ -1,11 +1,17 @@
+# tests/conftest.py
+from pathlib import Path
+import sys
 import pytest
 import torch
 
-@pytest.fixture(scope="session")
-def device():
-    return "cuda" if torch.cuda.is_available() else "cpu"
+# ① プロジェクトルートを sys.path に追加（llmmini を import しやすくする）
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-@pytest.fixture(scope="session")
-def rng():
-    torch.manual_seed(42)
-    return torch.Generator().manual_seed(42)
+
+# ② 全テストで共有する device フィクスチャ（CPU/GPU）
+@pytest.fixture
+def device():
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
