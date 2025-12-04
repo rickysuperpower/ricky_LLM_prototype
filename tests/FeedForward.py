@@ -1,11 +1,7 @@
-import torch
-import torch.nn as nn
-from llmmini.gelu import GELU
-
 class FeedForward(nn.Module):
     def __init__(self, cfg):
         super().__init__()
-        self.layers = nn.Sequential(
+        self.lwayers = nn.Sequential(
             nn.Linear(cfg["emb_dim"], 4 * cfg["emb_dim"]),
             GELU(),
             nn.Linear(4 * cfg["emb_dim"], cfg["emb_dim"])

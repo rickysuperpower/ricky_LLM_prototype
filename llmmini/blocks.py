@@ -1,16 +1,36 @@
 import torch
 import torch.nn as nn
 
-class DummyLayerNorm(nn.Module):
-    """自作版の練習用。今は使わなくてOK。"""
-    def __init__(self, normalized_shape, eps=1e-5):
+from llmmini.attention import MultiHeadAttention
+from llmmini.feedforward import FeedForward
+from llmmini.layers import LayerNorm
+
+class TransformerBlock(nn.Module):
+    def __init__(self, cfg):
         super().__init__()
-        self.weight = nn.Parameter(torch.ones(normalized_shape))
-        self.bias = nn.Parameter(torch.zeros(normalized_shape))
-        self.eps = eps
+        self.att = MultiHeadAttention(
+            d_in=cfg["emb_dim"],
+            d_out=cfg["emb_dim"],
+            context_length=cfg["context_length"],
+            num_heads=cfg["n_heads"],
+            dropout=cfg["drop_rate"],
+            qkv_bias=cfg["qkv_bias"]
+        )
+        self.ff = FeedForward(cfg)
+        self.norm1 = LayerNorm(cfg["emb_dim"])
+        self.norm2 = LayerNorm(cfg["emb_dim"])
+        self.drop_shortcut = nn.Dropout(cfg["drop_rate"])
 
     def forward(self, x):
-        mean = x.mean(-1, keepdim=True)
-        var = x.var(-1, unbiased=False, keepdim=True)
-        x_hat = (x - mean) / torch.sqrt(var + self.eps)
-        return self.weight * x_hat + self.bias
+        shortcut = x
+        x = self.norm1(x)
+        x = self.att(x)
+        x = self.drop_shortcut(x)
+        x = x + shortcut
+
+        shortcut = x
+        x = self.norm2(x)
+        x = self.ff(x)
+        x = self.drop_shortcut(x)
+        x = x + shortcut
+        return x

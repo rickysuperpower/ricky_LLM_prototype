@@ -18,7 +18,13 @@ class SimpleTokenizerV1:
         text = re.sub(r'\s+([,.?!"()\'])', r'\1', text) # 指定された句読点の前にあるスペースを削除
         return text
     
+all_words = sorted(set(preprocessed))    
+vocab = {token:integer for integer,token in enumerate(all_words)}
 
+for i, item in enumerate(vocab.items()):
+    print(item)
+    if i >= 50:
+        break
 tokenizer = SimpleTokenizerV1(vocab)
 text = """"It's the last he painted, you know,"
             Mrs. Gisburn said with pardonable pride."""

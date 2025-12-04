@@ -1,31 +1,50 @@
 import torch
 import torch.nn as nn
-from .config import GPTConfig
-from .blocks import DummyTransformerBlock
+from .blocks import TransformerBlock
+from .layers import LayerNorm
 
-class DummyGPTModel(nn.Module):
-    def __init__(self, cfg: GPTConfig):
+class GPTModel(nn.Module):
+    def __init__(self, cfg):
         super().__init__()
-        self.cfg = cfg
-        self.tok_emb = nn.Embedding(cfg.vocab_size, cfg.emb_dim)
-        self.pos_emb = nn.Embedding(cfg.context_length, cfg.emb_dim)
-        self.drop_emb = nn.Dropout(cfg.drop_rate)
+        self.tok_emb = nn.Embedding(cfg["vocab_size"], cfg["emb_dim"])
+        self.pos_emb = nn.Embedding(cfg["context_length"], cfg["emb_dim"])
+        self.drop_emb = nn.Dropout(cfg["drop_rate"])
 
         self.trf_blocks = nn.Sequential(
-            *[DummyTransformerBlock(cfg) for _ in range(cfg.n_layers)]
+            *[TransformerBlock(cfg) for _ in range(cfg["n_layers"])]
         )
 
-        self.final_norm = nn.LayerNorm(cfg.emb_dim)
-        self.out_head = nn.Linear(cfg.emb_dim, cfg.vocab_size, bias=False)
+        self.final_norm = LayerNorm(cfg["emb_dim"])
+        self.out_head = nn.Linear(
+            cfg["emb_dim"], cfg["vocab_size"], bias = False
+        )
 
     def forward(self, in_idx):
-        # in_idx: (B, T)
-        _, seq_len = in_idx.shape
-        tok = self.tok_emb(in_idx)  # (B, T, D)
-        pos = self.pos_emb(torch.arange(seq_len, device=in_idx.device))  # (T, D)
-        x = tok + pos
+        batch_size, seq_len = in_idx.shape
+        tok_embeds = self.tok_emb(in_idx)
+
+        pos_embeds = self.pos_emb(
+            torch.arange(seq_len, device=in_idx.device)
+        )
+        x = tok_embeds + pos_embeds
         x = self.drop_emb(x)
         x = self.trf_blocks(x)
         x = self.final_norm(x)
-        logits = self.out_head(x)  # (B, T, V)
+        logits = self.out_head(x)
         return logits
+    
+def generate_text_simple(model, idx, max_new_tokens, context_size):
+    # idx: (batch, n_tokens)
+    for _ in range(max_new_tokens):
+        idx_cond = idx[:, -context_size:]
+
+        with torch.no_grad():
+            logits = model(idx_cond)      # (B, T, V)
+
+        logits = logits[:, -1, :]        # (B, V)
+        probas = torch.softmax(logits, dim=-1)
+        idx_next = torch.argmax(probas, dim=-1, keepdim=True)  # (B, 1)
+
+        idx = torch.cat((idx, idx_next), dim=1)  # (B, T+1)
+
+    return idx
