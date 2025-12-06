@@ -2,7 +2,7 @@
 import torch
 
 from llmmini.config import GPT_CONFIG_124M
-from llmmini.bpetokenizer import BPETokenizer
+from llmmini.tokenizers.bpetokenizer import BPETokenizer
 from llmmini.model import GPTModel, generate_text_simple
 
 
